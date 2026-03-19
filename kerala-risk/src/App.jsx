@@ -5,10 +5,12 @@ import StatBar from './components/StatBar';
 import KeralaMap from './components/KeralaMap';
 import ExposurePanel from './components/ExposurePanel';
 import DetailPanel from './components/DetailPanel';
+import DiseasePage from './pages/DiseasePage';
 
 export default function App() {
   const { districts, loading, error } = useDistrictData();
   const [selected, setSelected] = useState(null);
+  const [page, setPage] = useState(1);
 
   const handleSelect = useCallback((d) => {
     setSelected(prev => (prev?.district === d?.district ? null : d));
@@ -16,36 +18,42 @@ export default function App() {
 
   const handleClose = useCallback(() => setSelected(null), []);
 
+  const handlePageChange = useCallback((p) => {
+    setPage(p);
+    setSelected(null);
+  }, []);
+
   if (loading) return <LoadingScreen />;
   if (error)   return <ErrorScreen message={error} />;
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
-      <Navbar />
+      <Navbar page={page} onPageChange={handlePageChange} />
 
-      <div style={{ padding: '24px 32px 60px', maxWidth: 1800, margin: '0 auto' }}>
+      {page === 1 ? (
+        <div style={{ padding: '24px 32px 60px', maxWidth: 1800, margin: '0 auto' }}>
+          {/* ── Stat bar ─── */}
+          <StatBar districts={districts} />
 
-        {/* ── Stat bar ─── */}
-        <StatBar districts={districts} />
-
-        {/* ── Main row: map + exposure ─── */}
-        <div style={{ display: 'flex', gap: 20, marginBottom: 20, alignItems: 'flex-start' }}>
-          <KeralaMap
-            districts={districts}
-            selectedDistrict={selected}
-            onSelect={handleSelect}
-          />
-          <ExposurePanel
-            districts={districts}
-            selected={selected}
-          />
+          {/* ── Main row: map + exposure ─── */}
+          <div style={{ display: 'flex', gap: 20, marginBottom: 20, alignItems: 'flex-start' }}>
+            <KeralaMap
+              districts={districts}
+              selectedDistrict={selected}
+              onSelect={handleSelect}
+            />
+            <ExposurePanel
+              districts={districts}
+              selected={selected}
+            />
+          </div>
         </div>
+      ) : (
+        <DiseasePage districts={districts} />
+      )}
 
-
-      </div>
-
-      {/* ── Slide-in detail panel ─── */}
-      {selected && (
+      {/* ── Slide-in detail panel (page 1 only) ─── */}
+      {page === 1 && selected && (
         <DetailPanel district={selected} onClose={handleClose} />
       )}
     </div>

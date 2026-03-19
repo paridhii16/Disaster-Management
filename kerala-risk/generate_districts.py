@@ -43,9 +43,11 @@ OUTPUT_FILE = "districts.csv"
 VULNERABILITY_CONFIG = [
     {"column": "literacy_rate", "invert": True, "weight": 1},
     {"column": "beds_per_1000", "invert": True, "weight": 1},
+    {"column": "icu_beds_per_1000", "invert": True, "weight": 1},
     {"column": "density", "invert": False, "weight": 1},
+    {"column": "urban_pct", "invert": False, "weight": 1},
     {"column": "gddp_per_capita", "invert": True, "weight": 1},
-    {"column": "vax_rate", "invert": True, "weight": 1},
+    {"column": "unemployment_proxy", "invert": False, "weight": 1},
 ]
 
 # Districts we expect — used only for a final validation print
@@ -413,6 +415,7 @@ def main():
 
     # ── Derived columns ───────────────────────────────────────────
     df["beds_per_1000"] = (df["hospital_beds"] / df["Population"] * 1000).round(3)
+    df["icu_beds_per_1000"] = (df["icu_beds"] / df["Population"] * 1000).round(3)
     df["gddp_per_capita"] = (df["GDDP_Lakhs"] * 100_000 / df["Population"]).round(0)
 
     # ── Rename to clean snake_case ────────────────────────────────
@@ -441,6 +444,7 @@ def main():
         "hospitals",
         "hospital_beds",
         "icu_beds",
+        "icu_beds_per_1000",
         "ventilators",
         "beds_per_1000",
         "gddp_lakhs",

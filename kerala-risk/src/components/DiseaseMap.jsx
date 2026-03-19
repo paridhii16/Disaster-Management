@@ -1,6 +1,12 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
 import { geoMercator, geoPath } from "d3-geo";
-import { riskColor } from "../utils/vulnerability";
+import { diseaseRiskColor, diseaseRiskTier } from "../utils/seir";
 
 const GEOJSON_URL =
   "https://raw.githubusercontent.com/geohacker/kerala/master/geojsons/district.geojson";
@@ -27,51 +33,18 @@ const SHORT_NAMES = {
   Pathanamthitta: "P.Thitta",
 };
 
-const METRIC_OPTIONS = [
-  {
-    value: "vulnerability",
-    label: "Vulnerability Score",
-    max: 100,
-    higherBad: true,
-  },
-  { value: "density", label: "Population Density", max: 1600, higherBad: true },
-  {
-    value: "beds_per_1000",
-    label: "Hospital Beds / 1k",
-    max: 2,
-    higherBad: false,
-  },
-  {
-    value: "gddp_per_capita",
-    label: "GDDP per Capita (₹)",
-    max: 500000,
-    higherBad: false,
-  },
-  {
-    value: "literacy_rate",
-    label: "Literacy Rate",
-    max: 100,
-    higherBad: false,
-  },
-];
-
-function getColor(d, metric) {
-  if (!d) return "rgba(80,100,140,0.35)";
-  const cfg = METRIC_OPTIONS.find((m) => m.value === metric);
-  const norm = Math.min(1, Math.max(0, d[metric] / cfg.max));
-  const score = cfg.higherBad ? norm * 100 : (1 - norm) * 100;
-  return riskColor(score, 0.84);
-}
-
-export default function KeralaMap({ districts, selectedDistrict, onSelect }) {
+export default function DiseaseMap({
+  districts,
+  baselineDistricts = [],
+  selectedDistrict,
+  onSelect,
+}) {
   const [pathData, setPathData] = useState([]);
   const [geoError, setGeoError] = useState(null);
   const [geoLoading, setGeoLoading] = useState(true);
-  const [metric, setMetric] = useState("vulnerability");
   const [tooltip, setTooltip] = useState(null);
   const wrapRef = useRef(null);
 
-  // Map SVG dimensions — taller viewBox for a larger rendered map
   const VW = 460,
     VH = 880;
 
@@ -91,7 +64,6 @@ export default function KeralaMap({ districts, selectedDistrict, onSelect }) {
           gj,
         );
         const pathGen = geoPath().projection(projection);
-
         const paths = gj.features.map((feature) => {
           const geoName = feature.properties.DISTRICT;
           const csvName = GEOJSON_TO_CSV[geoName] || geoName;
@@ -104,12 +76,10 @@ export default function KeralaMap({ districts, selectedDistrict, onSelect }) {
             cy: isNaN(centroid[1]) ? 0 : centroid[1],
           };
         });
-
         setPathData(paths);
         setGeoLoading(false);
       })
       .catch((err) => {
-        console.error("GeoJSON load failed:", err);
         setGeoError(err.message);
         setGeoLoading(false);
       });
@@ -120,13 +90,27 @@ export default function KeralaMap({ districts, selectedDistrict, onSelect }) {
     [districts],
   );
 
+  // Quick lookup for baseline risk by district name
+  const baselineByName = useMemo(() => {
+    const m = new Map();
+    baselineDistricts.forEach((d) => m.set(d.district, d.diseaseRisk));
+    return m;
+  }, [baselineDistricts]);
+
   function handleMouseEnter(e, item) {
     const d = byName(item.csvName);
     if (!d) return;
     const rect = wrapRef.current.getBoundingClientRect();
+    const TOOLTIP_HEIGHT = 220;
+    const TOOLTIP_WIDTH = 220;
+    let y = e.clientY - rect.top - 16;
+    // If tooltip would extend below container, position above cursor instead
+    if (y + TOOLTIP_HEIGHT > rect.height) {
+      y = Math.max(0, e.clientY - rect.top - TOOLTIP_HEIGHT - 8);
+    }
     setTooltip({
-      x: Math.min(e.clientX - rect.left + 16, rect.width - 210),
-      y: Math.max(0, e.clientY - rect.top - 16),
+      x: Math.min(e.clientX - rect.left + 16, rect.width - TOOLTIP_WIDTH),
+      y,
       d,
     });
   }
@@ -134,35 +118,40 @@ export default function KeralaMap({ districts, selectedDistrict, onSelect }) {
   function handleMouseMove(e) {
     if (!tooltip) return;
     const rect = wrapRef.current.getBoundingClientRect();
+    const TOOLTIP_HEIGHT = 220;
+    const TOOLTIP_WIDTH = 220;
+    let y = e.clientY - rect.top - 16;
+    // If tooltip would extend below container, position above cursor instead
+    if (y + TOOLTIP_HEIGHT > rect.height) {
+      y = Math.max(0, e.clientY - rect.top - TOOLTIP_HEIGHT - 8);
+    }
     setTooltip((t) =>
       t
         ? {
             ...t,
-            x: Math.min(e.clientX - rect.left + 16, rect.width - 210),
-            y: Math.max(0, e.clientY - rect.top - 16),
+            x: Math.min(e.clientX - rect.left + 16, rect.width - TOOLTIP_WIDTH),
+            y,
           }
         : null,
     );
   }
 
-  const cfg = METRIC_OPTIONS.find((m) => m.value === metric);
-
   return (
     <div className="card" style={{ flex: "0 0 480px", padding: 16 }}>
       {/* Header */}
       <div className="card-hd" style={{ marginBottom: 14 }}>
-        District Vulnerability Map
-        <select
-          value={metric}
-          onChange={(e) => setMetric(e.target.value)}
-          style={{ fontSize: 12, padding: "5px 10px" }}
+        Disease Risk Zoning Map
+        <span
+          style={{
+            fontSize: 11,
+            color: "var(--muted)",
+            fontWeight: 400,
+            textTransform: "none",
+            letterSpacing: 0,
+          }}
         >
-          {METRIC_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
+          Risk = Hazard × Vulnerability × Exposure
+        </span>
       </div>
 
       {/* Map container */}
@@ -204,7 +193,7 @@ export default function KeralaMap({ districts, selectedDistrict, onSelect }) {
                 cy="19"
                 r="14"
                 fill="none"
-                stroke="var(--accent)"
+                stroke="var(--red)"
                 strokeWidth="3"
                 strokeDasharray="20 66"
                 strokeLinecap="round"
@@ -257,12 +246,12 @@ export default function KeralaMap({ districts, selectedDistrict, onSelect }) {
             <text
               x="20"
               y="22"
-              fill="rgba(79,126,255,.45)"
+              fill="rgba(240,82,82,.38)"
               fontSize="11"
               fontFamily="Space Grotesk, sans-serif"
               letterSpacing="2"
             >
-              KERALA
+              DISEASE RISK ZONES
             </text>
 
             {/* District polygons */}
@@ -270,11 +259,12 @@ export default function KeralaMap({ districts, selectedDistrict, onSelect }) {
               {pathData.map((item) => {
                 const d = byName(item.csvName);
                 const sel = selectedDistrict?.district === item.csvName;
+                const risk = d?.diseaseRisk ?? 50;
                 return (
                   <path
                     key={item.csvName}
                     d={item.d}
-                    fill={getColor(d, metric)}
+                    fill={diseaseRiskColor(risk, 0.82)}
                     stroke={sel ? "#ffffff" : "rgba(0,0,0,.45)"}
                     strokeWidth={sel ? 2.5 : 1}
                     strokeLinejoin="round"
@@ -292,7 +282,7 @@ export default function KeralaMap({ districts, selectedDistrict, onSelect }) {
               })}
             </g>
 
-            {/* Labels — name + vulnerability score */}
+            {/* Labels */}
             <g pointerEvents="none">
               {pathData.map((item) => {
                 const d = byName(item.csvName);
@@ -322,7 +312,7 @@ export default function KeralaMap({ districts, selectedDistrict, onSelect }) {
                         fontSize="8"
                         fontFamily="Space Grotesk, sans-serif"
                       >
-                        {d.vulnerability}
+                        {d.diseaseRisk}
                       </text>
                     )}
                   </g>
@@ -333,66 +323,144 @@ export default function KeralaMap({ districts, selectedDistrict, onSelect }) {
         )}
 
         {/* Tooltip */}
-        {tooltip && (
-          <div
-            style={{
-              position: "absolute",
-              left: tooltip.x,
-              top: tooltip.y,
-              background: "rgba(6,11,22,.97)",
-              border: "1px solid var(--border2)",
-              borderRadius: 10,
-              padding: "12px 15px",
-              fontSize: 12.5,
-              pointerEvents: "none",
-              zIndex: 99,
-              minWidth: 190,
-              boxShadow: "0 10px 28px rgba(0,0,0,.55)",
-            }}
-          >
-            <div
-              style={{
-                fontFamily: "var(--head)",
-                fontSize: 15,
-                fontWeight: 600,
-                marginBottom: 8,
-              }}
-            >
-              {tooltip.d.district}
-            </div>
-            {[
-              [
-                "Vulnerability",
-                `${tooltip.d.vulnerability}/100`,
-                riskColor(tooltip.d.vulnerability),
-              ],
-              [
-                "Population",
-                `${(tooltip.d.population / 1e6).toFixed(2)}M`,
-                null,
-              ],
-              ["Density", `${tooltip.d.density}/km²`, null],
-              ["Beds / 1k", tooltip.d.beds_per_1000, null],
-              ["Literacy", `${tooltip.d.literacy_rate}%`, null],
-            ].map(([lbl, val, col]) => (
+        {tooltip &&
+          (() => {
+            const { d } = tooltip;
+            const tier = diseaseRiskTier(d.diseaseRisk ?? 50);
+            return (
               <div
-                key={lbl}
                 style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  gap: 14,
-                  color: "var(--muted)",
-                  marginBottom: 3,
+                  position: "absolute",
+                  left: tooltip.x,
+                  top: tooltip.y,
+                  background: "rgba(6,11,22,.97)",
+                  border: "1px solid var(--border2)",
+                  borderRadius: 10,
+                  padding: "12px 15px",
+                  fontSize: 12.5,
+                  pointerEvents: "none",
+                  zIndex: 99,
+                  minWidth: 205,
+                  boxShadow: "0 10px 28px rgba(0,0,0,.55)",
                 }}
               >
-                <span>{lbl}</span>
-                <span style={{ color: col || "var(--text)", fontWeight: 500 }}>
-                  {val}
-                </span>
+                <div
+                  style={{
+                    fontFamily: "var(--head)",
+                    fontSize: 15,
+                    fontWeight: 600,
+                    marginBottom: 8,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  {d.district}
+                  <span
+                    style={{
+                      fontSize: 11,
+                      padding: "2px 8px",
+                      borderRadius: 4,
+                      background: `${tier.color}22`,
+                      color: tier.color,
+                      border: `1px solid ${tier.color}44`,
+                    }}
+                  >
+                    {tier.label}
+                  </span>
+                </div>
+                {(() => {
+                  const currentRisk = d.diseaseRisk ?? 0;
+                  const baseRisk = baselineByName.get(d.district);
+                  const delta = baseRisk != null ? currentRisk - baseRisk : 0;
+                  const showDelta = Math.abs(delta) >= 0.1;
+                  const deltaColor = delta > 0 ? "#f05252" : "#00c9a7";
+                  const deltaLabel = `${delta > 0 ? "+" : ""}${delta.toFixed(1)}%`;
+                  return (
+                    <>
+                      {[
+                        [
+                          "Disease Risk Score",
+                          `${currentRisk}/100`,
+                          tier.color,
+                        ],
+                        ["Base Vulnerability", `${d.vulnerability}/100`, null],
+                        [
+                          "Computed Vulnerability",
+                          `${d.compVulnerability ?? d.vulnerability}/100`,
+                          "var(--amber)",
+                        ],
+                        ["Population Density", `${d.density}/km²`, null],
+                        [
+                          "Beds / 1,000",
+                          typeof d.beds_per_1000 === "number"
+                            ? d.beds_per_1000.toFixed(2)
+                            : d.beds_per_1000,
+                          null,
+                        ],
+                        ["Literacy Rate", `${d.literacy_rate}%`, null],
+                        [
+                          "GDDP per Capita",
+                          `₹${(d.gddp_per_capita / 1000).toFixed(0)}k`,
+                          null,
+                        ],
+                      ].map(([lbl, val, col]) => (
+                        <div
+                          key={lbl}
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            gap: 14,
+                            color: "var(--muted)",
+                            marginBottom: 3,
+                          }}
+                        >
+                          <span>{lbl}</span>
+                          <span
+                            style={{
+                              color: col || "var(--text)",
+                              fontWeight: 500,
+                            }}
+                          >
+                            {val}
+                          </span>
+                        </div>
+                      ))}
+                      {showDelta && (
+                        <div
+                          style={{
+                            marginTop: 8,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 7,
+                            background: `${deltaColor}18`,
+                            border: `1px solid ${deltaColor}44`,
+                            borderRadius: 6,
+                            padding: "5px 9px",
+                          }}
+                        >
+                          <span style={{ fontSize: 11, color: "var(--muted)" }}>
+                            Risk change vs baseline
+                          </span>
+                          <span
+                            style={{
+                              marginLeft: "auto",
+                              fontFamily: "var(--head)",
+                              fontSize: 13,
+                              fontWeight: 700,
+                              color: deltaColor,
+                            }}
+                          >
+                            {deltaLabel} {delta > 0 ? "↑" : "↓"}
+                          </span>
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
-            ))}
-          </div>
-        )}
+            );
+          })()}
 
         {/* Legend */}
         <div
@@ -415,12 +483,12 @@ export default function KeralaMap({ districts, selectedDistrict, onSelect }) {
               letterSpacing: ".7px",
             }}
           >
-            {cfg?.label}
+            Disease Risk Score
           </div>
           {[
-            ["var(--red)", cfg?.higherBad ? "High (risk)" : "High (good)"],
-            ["var(--amber)", "Moderate"],
-            ["var(--teal)", cfg?.higherBad ? "Low (safe)" : "Low (concern)"],
+            ["var(--red)", "Critical (≥65)"],
+            ["var(--amber)", "Elevated (40–64)"],
+            ["var(--teal)", "Contained (<40)"],
           ].map(([color, label]) => (
             <div
               key={label}
