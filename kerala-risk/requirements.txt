@@ -1,0 +1,6 @@
+# Python dependencies for generate_districts.py
+# Install with: pip install -r requirements.txt
+
+pandas>=2.0.0
+numpy>=1.24.0
+scikit-learn>=1.3.0

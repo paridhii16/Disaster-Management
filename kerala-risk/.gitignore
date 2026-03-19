@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+
+# Production build
+build/
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+Thumbs.db
+
+# Python cache (for generate_districts.py)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.env/
+venv/
+env/
+*.egg-info/
+dist/
+*.egg
+
+# Jupyter
+.ipynb_checkpoints/
