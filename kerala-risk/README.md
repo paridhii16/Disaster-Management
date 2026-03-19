@@ -1,13 +1,13 @@
 # Kerala RiskWatch — Vulnerability Index Dashboard
 
-A React dashboard for district-level disease vulnerability assessment in Kerala, built on real Census 2011, NHM, and GSDP data. Designed to be fully configurable and generalisable to any Indian state.
+A React dashboard for district-level disease vulnerability assessment in Kerala, built on real Census , NHM, and GSDP data. Designed to be fully configurable and generalisable to any Indian state.
 
 ---
 
 ## Screenshots
 
-| Stat Bar & Map | Rankings & Beds Chart |
-|---|---|
+| Stat Bar & Map                                       | Rankings & Beds Chart                                 |
+| ---------------------------------------------------- | ----------------------------------------------------- |
 | Top-level summary cards + interactive choropleth map | Sortable district table + hospital bed capacity chart |
 
 ---
@@ -17,7 +17,7 @@ A React dashboard for district-level disease vulnerability assessment in Kerala,
 - **Interactive choropleth map** — real Kerala district boundaries from GeoJSON (loaded live from GitHub), switchable across 6 metrics
 - **Composite vulnerability score** — configurable min-max weighted index (literacy, beds/1k, density, GDP, vaccination)
 - **Exposure panel** — population density, GDDP per capita, literacy, beds, vaccination rate bars
-- **Rural / Urban split chart** — Census 2011 breakdown per district or all districts stacked
+- **Rural / Urban split chart** — Census breakdown per district or all districts stacked
 - **GDDP contribution chart** — each district's share of state GSDP
 - **District detail panel** — slides in on click, shows ring score, radar chart, all metrics, key flags
 - **CSV-driven** — no hardcoded data; all CSVs live in `public/data/` and are loaded at runtime
@@ -77,15 +77,15 @@ npm start
 
 Place these raw files in the same folder as `generate_districts.py`:
 
-| File | Source |
-|---|---|
-| `kerala_districts_only.csv` | Census  — district population, area, density |
-| `literate.csv` | Census  Table C-08 — literacy by district and age |
-| `kerala_bed_capacity.csv` | NHM Kerala — hospitals, beds, ICU, ventilators |
-| `income.csv` | GSDP data — district GSDP in Lakhs + % of state |
-| `GoK_Dashboard__Official_Kerala_COVID-19_Statistics.csv` | GoK COVID dashboard — vaccination counts |
-| `kerala_processed_population.csv` | Population denominators for vaccination rate |
-| `works_pop_edu.csv` | Census  Table B-03 — workers / non-workers |
+| File                                                     | Source                                           |
+| -------------------------------------------------------- | ------------------------------------------------ |
+| `kerala_districts_only.csv`                              | Census — district population, area, density      |
+| `literate.csv`                                           | Census Table C-08 — literacy by district and age |
+| `kerala_bed_capacity.csv`                                | NHM Kerala — hospitals, beds, ICU, ventilators   |
+| `income.csv`                                             | GSDP data — district GSDP in Lakhs + % of state  |
+| `GoK_Dashboard__Official_Kerala_COVID-19_Statistics.csv` | GoK COVID dashboard — vaccination counts         |
+| `kerala_processed_population.csv`                        | Population denominators for vaccination rate     |
+| `works_pop_edu.csv`                                      | Census Table B-03 — workers / non-workers        |
 
 Then run:
 
@@ -100,15 +100,15 @@ python generate_districts.py
 
 ## Data Sources
 
-| Indicator | Source | Year |
-|---|---|---|
-| Population, area, density | Census of India 
-| Rural / urban split | Census of India 
-| Literacy rate | Census of India (Table C-08) 
-| Hospital beds, ICU, ventilators | National Health Mission Kerala
-| GSDP per capita | Kerala State Planning Board
-| Vaccination rate | Government of Kerala COVID-19 Dashboard
-| District boundaries (GeoJSON) | [geohacker/kerala](https://github.com/geohacker/kerala) on GitHub | Survey of India |
+| Indicator                       | Source                                                            | Year            |
+| ------------------------------- | ----------------------------------------------------------------- | --------------- |
+| Population, area, density       | Census of India                                                   |
+| Rural / urban split             | Census of India                                                   |
+| Literacy rate                   | Census of India (Table C-08)                                      |
+| Hospital beds, ICU, ventilators | National Health Mission Kerala                                    |
+| GSDP per capita                 | Kerala State Planning Board                                       |
+| Vaccination rate                | Government of Kerala COVID-19 Dashboard                           |
+| District boundaries (GeoJSON)   | [geohacker/kerala](https://github.com/geohacker/kerala) on GitHub | Survey of India |
 
 ---
 
@@ -118,11 +118,11 @@ The composite score (0–100, higher = more vulnerable) is computed in `src/util
 
 ```js
 export const VULNERABILITY_CONFIG = [
-  { column: 'literacy_rate',    invert: true,  weight: 1 },  // higher = safer
-  { column: 'beds_per_1000',    invert: true,  weight: 1 },  // higher = safer
-  { column: 'density',          invert: false, weight: 1 },  // higher = more risk
-  { column: 'gddp_per_capita',  invert: true,  weight: 1 },  // higher = safer
-  { column: 'vax_rate',         invert: true,  weight: 1 },  // higher = safer
+  { column: "literacy_rate", invert: true, weight: 1 }, // higher = safer
+  { column: "beds_per_1000", invert: true, weight: 1 }, // higher = safer
+  { column: "density", invert: false, weight: 1 }, // higher = more risk
+  { column: "gddp_per_capita", invert: true, weight: 1 }, // higher = safer
+  { column: "vax_rate", invert: true, weight: 1 }, // higher = safer
 ];
 ```
 
@@ -138,7 +138,8 @@ To add or remove an indicator, edit only this config array — no component chan
 2. Update `VULNERABILITY_CONFIG` in `src/utils/vulnerability.js` to match your columns
 3. Update the GeoJSON URL in `src/components/KeralaMap.jsx`:
    ```js
-   const GEOJSON_URL = 'https://raw.githubusercontent.com/your-repo/state.geojson';
+   const GEOJSON_URL =
+     "https://raw.githubusercontent.com/your-repo/state.geojson";
    ```
    The GeoJSON must have `feature.properties.DISTRICT` (or update `GEOJSON_TO_CSV` to match your property key)
 4. Update `GEOJSON_TO_CSV` in `KeralaMap.jsx` to map GeoJSON names → CSV district names
@@ -149,14 +150,13 @@ To add or remove an indicator, edit only this config array — no component chan
 
 ## Tech Stack
 
-| Layer | Library |
-|---|---|
-| UI framework | React 18 |
-| Charts | Recharts |
-| Map projection | d3-geo |
-| CSV parsing | PapaParse |
-| Styling | CSS custom properties (no Tailwind runtime needed) |
-| Data preprocessing | Python — pandas, numpy, scikit-learn |
+| Layer              | Library                                            |
+| ------------------ | -------------------------------------------------- |
+| UI framework       | React 18                                           |
+| Charts             | Recharts                                           |
+| Map projection     | d3-geo                                             |
+| CSV parsing        | PapaParse                                          |
+| Styling            | CSS custom properties (no Tailwind runtime needed) |
+| Data preprocessing | Python — pandas, numpy, scikit-learn               |
 
 ---
-

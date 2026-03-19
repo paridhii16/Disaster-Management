@@ -5,13 +5,13 @@ Generates districts.csv — the single merged dataset used by the Kerala RiskWat
 React dashboard — from the raw source CSV files.
 
 INPUT FILES (place all in the same folder as this script, or set RAW_DATA_DIR):
-  - kerala_districts_only.csv          (Census 2011 district population / area)
-  - literate.csv                       (Census 2011 literacy by district & age)
+  - kerala_districts_only.csv          (Census  district population / area)
+  - literate.csv                       (Census  literacy by district & age)
   - kerala_bed_capacity.csv            (NHM hospital/bed/ICU/ventilator data)
   - income.csv                         (District GSDP in Lakhs + % of state)
   - GoK_Dashboard__Official_Kerala_COVID-19_Statistics.csv  (Vaccination counts)
   - kerala_processed_population.csv    (Population denominators for vax rate)
-  - works_pop_edu.csv                  (Census 2011 workers / non-workers)
+  - works_pop_edu.csv                  (Census  workers / non-workers)
 
 OUTPUT:
   - districts.csv   (one row per district, 20 columns, ready for /public/data/)
@@ -32,8 +32,8 @@ from sklearn.preprocessing import MinMaxScaler
 # CONFIG — point this at the folder containing all raw CSVs
 # ─────────────────────────────────────────────────────────────────────────────
 
-RAW_DATA_DIR = "."          # change if your CSVs are elsewhere
-OUTPUT_FILE  = "districts.csv"
+RAW_DATA_DIR = "."  # change if your CSVs are elsewhere
+OUTPUT_FILE = "districts.csv"
 
 # Vulnerability scoring config:
 #   column       — must match a column in the merged DataFrame
@@ -41,24 +41,36 @@ OUTPUT_FILE  = "districts.csv"
 #                  False = higher value means MORE vulnerable  (e.g. density)
 #   weight       — relative weight in the composite (all weights are normalised)
 VULNERABILITY_CONFIG = [
-    {"column": "literacy_rate",    "invert": True,  "weight": 1},
-    {"column": "beds_per_1000",    "invert": True,  "weight": 1},
-    {"column": "density",          "invert": False, "weight": 1},
-    {"column": "gddp_per_capita",  "invert": True,  "weight": 1},
-    {"column": "vax_rate",         "invert": True,  "weight": 1},
+    {"column": "literacy_rate", "invert": True, "weight": 1},
+    {"column": "beds_per_1000", "invert": True, "weight": 1},
+    {"column": "density", "invert": False, "weight": 1},
+    {"column": "gddp_per_capita", "invert": True, "weight": 1},
+    {"column": "vax_rate", "invert": True, "weight": 1},
 ]
 
 # Districts we expect — used only for a final validation print
 EXPECTED_DISTRICTS = [
-    "Kasaragod", "Kannur", "Wayanad", "Kozhikode", "Malappuram",
-    "Palakkad", "Thrissur", "Ernakulam", "Idukki", "Kottayam",
-    "Alappuzha", "Pathanamthitta", "Kollam", "Thiruvananthapuram",
+    "Kasaragod",
+    "Kannur",
+    "Wayanad",
+    "Kozhikode",
+    "Malappuram",
+    "Palakkad",
+    "Thrissur",
+    "Ernakulam",
+    "Idukki",
+    "Kottayam",
+    "Alappuzha",
+    "Pathanamthitta",
+    "Kollam",
+    "Thiruvananthapuram",
 ]
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # HELPERS
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def p(path):
     """Resolve a filename relative to RAW_DATA_DIR."""
@@ -67,7 +79,9 @@ def p(path):
 
 def clean_numeric(series):
     """Strip commas and coerce to float (Census CSVs use Indian number formatting)."""
-    return pd.to_numeric(series.astype(str).str.replace(",", "", regex=False), errors="coerce")
+    return pd.to_numeric(
+        series.astype(str).str.replace(",", "", regex=False), errors="coerce"
+    )
 
 
 def strip_district_names(df, col="District"):
@@ -77,8 +91,9 @@ def strip_district_names(df, col="District"):
 
 # ─────────────────────────────────────────────────────────────────────────────
 # STEP 1 — Population, area, density, rural/urban split
-#           Source: kerala_districts_only.csv  (Census 2011)
+#           Source: kerala_districts_only.csv  (Census )
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def load_population():
     """
@@ -100,7 +115,12 @@ def load_population():
 
     def extract(kind):
         sub = df[df["Total/\nRural/\nUrban 6"] == kind][
-            ["Name 5", "Population 11", "Area\n (In sq. km) 13.00", "Population per sq. km. 14"]
+            [
+                "Name 5",
+                "Population 11",
+                "Area\n (In sq. km) 13.00",
+                "Population per sq. km. 14",
+            ]
         ].copy()
         sub.columns = ["District", "Population", "Area_sqkm", "Density"]
         for col in ["Population", "Area_sqkm", "Density"]:
@@ -108,8 +128,12 @@ def load_population():
         return strip_district_names(sub)
 
     total = extract("Total")
-    rural = extract("Rural")[["District", "Population"]].rename(columns={"Population": "rural_pop"})
-    urban = extract("Urban")[["District", "Population"]].rename(columns={"Population": "urban_pop"})
+    rural = extract("Rural")[["District", "Population"]].rename(
+        columns={"Population": "rural_pop"}
+    )
+    urban = extract("Urban")[["District", "Population"]].rename(
+        columns={"Population": "urban_pop"}
+    )
 
     pop = total.merge(rural, on="District").merge(urban, on="District")
 
@@ -123,8 +147,9 @@ def load_population():
 
 # ─────────────────────────────────────────────────────────────────────────────
 # STEP 2 — Literacy rate
-#           Source: literate.csv  (Census 2011, Table C-08)
+#           Source: literate.csv  (Census , Table C-08)
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def load_literacy():
     """
@@ -156,7 +181,9 @@ def load_literacy():
     lit_d.columns = ["District", "Population", "Literate"]
 
     # Strip "District - " prefix that Census uses
-    lit_d["District"] = lit_d["District"].str.replace("District - ", "", regex=False).str.strip()
+    lit_d["District"] = (
+        lit_d["District"].str.replace("District - ", "", regex=False).str.strip()
+    )
 
     for col in ["Population", "Literate"]:
         lit_d[col] = clean_numeric(lit_d[col])
@@ -172,6 +199,7 @@ def load_literacy():
 # STEP 3 — Healthcare capacity
 #           Source: kerala_bed_capacity.csv  (NHM Kerala)
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def load_healthcare():
     """
@@ -190,6 +218,7 @@ def load_healthcare():
 #           Source: income.csv
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 def load_income():
     """
     Columns: District, GDDP_Lakhs, Percent_of_Total
@@ -206,6 +235,7 @@ def load_income():
 #           Source: GoK_Dashboard__Official_Kerala_COVID-19_Statistics.csv
 #           Denominator: kerala_processed_population.csv
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def load_vaccination():
     """
@@ -232,7 +262,9 @@ def load_vaccination():
     pop2["Pop2"] = pd.to_numeric(pop2["Pop2"], errors="coerce")
 
     vax = vax.merge(pop2, on="District", how="left")
-    vax["vax_rate"] = (vax["vaccinated_persons"] / vax["Pop2"] * 100).clip(upper=100).round(1)
+    vax["vax_rate"] = (
+        (vax["vaccinated_persons"] / vax["Pop2"] * 100).clip(upper=100).round(1)
+    )
 
     result = vax[["District", "total_doses", "vaccinated_persons", "vax_rate"]]
     print(f"[vaccination] {len(result)} districts loaded.")
@@ -241,8 +273,9 @@ def load_vaccination():
 
 # ─────────────────────────────────────────────────────────────────────────────
 # STEP 6 — Unemployment proxy
-#           Source: works_pop_edu.csv  (Census 2011 Table B-03)
+#           Source: works_pop_edu.csv  (Census  Table B-03)
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def load_unemployment():
     """
@@ -271,7 +304,9 @@ def load_unemployment():
     edu_d.columns = ["District", "Total_Pop", "NonWorkers", "NonWorkers_Seeking"]
 
     # Strip "District -" prefix
-    edu_d["District"] = edu_d["District"].str.replace("District -", "", regex=False).str.strip()
+    edu_d["District"] = (
+        edu_d["District"].str.replace("District -", "", regex=False).str.strip()
+    )
 
     for col in ["Total_Pop", "NonWorkers", "NonWorkers_Seeking"]:
         edu_d[col] = clean_numeric(edu_d[col])
@@ -288,6 +323,7 @@ def load_unemployment():
 # ─────────────────────────────────────────────────────────────────────────────
 # STEP 7 — Compute vulnerability score
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def compute_vulnerability(df, config=VULNERABILITY_CONFIG):
     """
@@ -315,8 +351,8 @@ def compute_vulnerability(df, config=VULNERABILITY_CONFIG):
     features = df[feature_cols].copy().astype(float)
 
     # Min-max scale each column
-    scaler  = MinMaxScaler()
-    scaled  = pd.DataFrame(
+    scaler = MinMaxScaler()
+    scaled = pd.DataFrame(
         scaler.fit_transform(features),
         columns=feature_cols,
         index=df.index,
@@ -328,15 +364,21 @@ def compute_vulnerability(df, config=VULNERABILITY_CONFIG):
             scaled[cfg["column"]] = 1 - scaled[cfg["column"]]
 
     # Weighted mean
-    weights      = np.array([c["weight"] for c in config], dtype=float)
-    weights      = weights / weights.sum()                # normalise
-    vuln_raw     = scaled[feature_cols].values @ weights  # dot product
-    df            = df.copy()
+    weights = np.array([c["weight"] for c in config], dtype=float)
+    weights = weights / weights.sum()  # normalise
+    vuln_raw = scaled[feature_cols].values @ weights  # dot product
+    df = df.copy()
     df["vulnerability"] = (vuln_raw * 100).round(1)
 
-    print(f"\n[vulnerability] Score range: "
-          f"{df['vulnerability'].min()} – {df['vulnerability'].max()}")
-    print(df[["district", "vulnerability"]].sort_values("vulnerability", ascending=False).to_string(index=False))
+    print(
+        f"\n[vulnerability] Score range: "
+        f"{df['vulnerability'].min()} – {df['vulnerability'].max()}"
+    )
+    print(
+        df[["district", "vulnerability"]]
+        .sort_values("vulnerability", ascending=False)
+        .to_string(index=False)
+    )
     return df
 
 
@@ -344,50 +386,68 @@ def compute_vulnerability(df, config=VULNERABILITY_CONFIG):
 # MAIN
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 def main():
     print("=" * 60)
     print("Kerala RiskWatch — districts.csv generator")
     print("=" * 60)
 
     # ── Load all sources ──────────────────────────────────────────
-    pop   = load_population()      # District, Population, Area_sqkm, Density, rural_pop, urban_pop, rural_pct, urban_pct
-    lit   = load_literacy()        # District, literacy_rate
-    hc    = load_healthcare()      # District, hospitals, hospital_beds, icu_beds, ventilators
-    inc   = load_income()          # District, GDDP_Lakhs, Percent_of_Total
-    vax   = load_vaccination()     # District, total_doses, vaccinated_persons, vax_rate
-    unemp = load_unemployment()    # District, unemployment_proxy
+    pop = (
+        load_population()
+    )  # District, Population, Area_sqkm, Density, rural_pop, urban_pop, rural_pct, urban_pct
+    lit = load_literacy()  # District, literacy_rate
+    hc = load_healthcare()  # District, hospitals, hospital_beds, icu_beds, ventilators
+    inc = load_income()  # District, GDDP_Lakhs, Percent_of_Total
+    vax = load_vaccination()  # District, total_doses, vaccinated_persons, vax_rate
+    unemp = load_unemployment()  # District, unemployment_proxy
 
     # ── Merge on 'District' ───────────────────────────────────────
     print("\n[merge] Joining all sources...")
     df = pop.copy()
-    df = df.merge(lit,   on="District", how="left")
-    df = df.merge(hc,    on="District", how="left")
-    df = df.merge(inc,   on="District", how="left")
-    df = df.merge(vax,   on="District", how="left")
+    df = df.merge(lit, on="District", how="left")
+    df = df.merge(hc, on="District", how="left")
+    df = df.merge(inc, on="District", how="left")
+    df = df.merge(vax, on="District", how="left")
     df = df.merge(unemp, on="District", how="left")
 
     # ── Derived columns ───────────────────────────────────────────
-    df["beds_per_1000"]   = (df["hospital_beds"] / df["Population"] * 1000).round(3)
+    df["beds_per_1000"] = (df["hospital_beds"] / df["Population"] * 1000).round(3)
     df["gddp_per_capita"] = (df["GDDP_Lakhs"] * 100_000 / df["Population"]).round(0)
 
     # ── Rename to clean snake_case ────────────────────────────────
-    df = df.rename(columns={
-        "District":        "district",
-        "Population":      "population",
-        "Area_sqkm":       "area_sqkm",
-        "Density":         "density",
-        "GDDP_Lakhs":      "gddp_lakhs",
-        "Percent_of_Total":"gddp_pct",
-    })
+    df = df.rename(
+        columns={
+            "District": "district",
+            "Population": "population",
+            "Area_sqkm": "area_sqkm",
+            "Density": "density",
+            "GDDP_Lakhs": "gddp_lakhs",
+            "Percent_of_Total": "gddp_pct",
+        }
+    )
 
     # ── Select and order final columns ────────────────────────────
     final_cols = [
-        "district", "population", "area_sqkm", "density",
-        "rural_pop", "urban_pop", "rural_pct", "urban_pct",
+        "district",
+        "population",
+        "area_sqkm",
+        "density",
+        "rural_pop",
+        "urban_pop",
+        "rural_pct",
+        "urban_pct",
         "literacy_rate",
-        "hospitals", "hospital_beds", "icu_beds", "ventilators", "beds_per_1000",
-        "gddp_lakhs", "gddp_pct", "gddp_per_capita",
-        "vax_rate", "unemployment_proxy",
+        "hospitals",
+        "hospital_beds",
+        "icu_beds",
+        "ventilators",
+        "beds_per_1000",
+        "gddp_lakhs",
+        "gddp_pct",
+        "gddp_per_capita",
+        "vax_rate",
+        "unemployment_proxy",
     ]
     df = df[final_cols]
 
@@ -412,7 +472,9 @@ def main():
 
     # ── Write output ──────────────────────────────────────────────
     df.to_csv(OUTPUT_FILE, index=False)
-    print(f"\n[output] Written to: {OUTPUT_FILE}  ({len(df)} rows × {len(df.columns)} columns)")
+    print(
+        f"\n[output] Written to: {OUTPUT_FILE}  ({len(df)} rows × {len(df.columns)} columns)"
+    )
     print("\nColumn list:")
     for col in df.columns:
         print(f"  {col}")
