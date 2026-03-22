@@ -225,24 +225,13 @@ export default function DetailPanel({ district, onClose }) {
         }}
       />
 
-      <SecLabel>Healthcare Capacity</SecLabel>
+      <SecLabel>Exposure Metrics</SecLabel>
       <MetricBar
-        label="Hospital Beds"
-        value={d.hospital_beds}
-        max={6000}
-        color="var(--accent)"
-      />
-      <MetricBar
-        label="Ventilators"
-        value={d.ventilators}
-        max={100}
-        color="var(--amber)"
-      />
-      <MetricBar
-        label="Beds per 1,000 population"
-        value={d.beds_per_1000}
-        max={2}
-        color="var(--teal)"
+        label="Population Density (/km²)"
+        value={d.density}
+        max={1600}
+        color="var(--red)"
+        suffix=" /km²"
       />
 
       <hr
@@ -253,14 +242,7 @@ export default function DetailPanel({ district, onClose }) {
         }}
       />
 
-      <SecLabel>Exposure Metrics</SecLabel>
-      <MetricBar
-        label="Population Density (/km²)"
-        value={d.density}
-        max={1600}
-        color="var(--red)"
-        suffix=" /km²"
-      />
+      <SecLabel>Vulnerability Metrics</SecLabel>
       <MetricBar
         label="GDDP per Capita (₹k)"
         value={Math.round(d.gddp_per_capita / 1000)}
@@ -290,7 +272,33 @@ export default function DetailPanel({ district, onClose }) {
           margin: "16px 0",
         }}
       />
+      <SecLabel>Healthcare Capacity</SecLabel>
+      <MetricBar
+        label="Hospital Beds"
+        value={d.hospital_beds}
+        max={6000}
+        color="var(--accent)"
+      />
+      <MetricBar
+        label="Ventilators"
+        value={d.ventilators}
+        max={100}
+        color="var(--amber)"
+      />
+      <MetricBar
+        label="Beds per 1,000 population"
+        value={d.beds_per_1000}
+        max={2}
+        color="var(--teal)"
+      />
 
+      <hr
+        style={{
+          border: "none",
+          borderTop: "1px solid var(--border)",
+          margin: "16px 0",
+        }}
+      />
       <SecLabel>Rural / Urban Population</SecLabel>
       <div style={{ height: 130 }}>
         <ResponsiveContainer width="100%" height="100%">
