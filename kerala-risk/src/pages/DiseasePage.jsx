@@ -8,6 +8,7 @@ import {
   DISEASE_PRESETS,
   DEFAULT_PARAMS,
 } from "../utils/seir";
+import { computeVulnerability } from "../utils/vulnerability";
 
 export default function DiseasePage({ districts }) {
   const [diseaseKey, setDiseaseKey] = useState("covid");
@@ -164,16 +165,21 @@ export default function DiseasePage({ districts }) {
   }, [selectedDistrict]);
 
   // ── BASELINE risk (global defaults, original CSV data, all districts) ──────
+  const vulnerabilityAlignedDistricts = useMemo(
+    () => computeVulnerability(districts),
+    [districts],
+  );
+
   const baselineResults = useMemo(
     () =>
-      computeDiseaseRisk(districts, {
+      computeDiseaseRisk(vulnerabilityAlignedDistricts, {
         ...globalParams,
         bedsWeight: 1,
         gdpWeight: 1,
         literacyWeight: 1,
         densityScale: 1,
       }),
-    [districts, globalParams],
+    [vulnerabilityAlignedDistricts, globalParams],
   );
 
   // ── ACTIVE risk ────────────────────────────────────────────────────────────
@@ -230,7 +236,7 @@ export default function DiseasePage({ districts }) {
       };
 
       const overrideResults = computeDiseaseRisk(
-        modifiedDistricts,
+        computeVulnerability(modifiedDistricts),
         overrideRiskParams,
       );
       const overriddenDistrict = overrideResults.find(
