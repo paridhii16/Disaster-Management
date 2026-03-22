@@ -236,6 +236,7 @@ export default function ParameterPanel({
   const literacyDefault = context?.baseline?.literacy_rate || 1;
   const urbanPctDefault = context?.baseline?.urban_pct || 0;
   const employmentDefault = context?.baseline?.unemployment_proxy || 0;
+  const mobilityDefault = context?.baseline?.mobility_exposure_score || 0;
 
   const hospitalBedsValue =
     params.vulnHospitalBedsAbsolute ??
@@ -246,6 +247,7 @@ export default function ParameterPanel({
   const literacyValue = params.vulnLiteracyAbsolute ?? literacyDefault;
   const urbanPctValue = params.vulnUrbanPctAbsolute ?? urbanPctDefault;
   const employmentValue = params.vulnEmploymentAbsolute ?? employmentDefault;
+  const mobilityValue = params.vulnMobilityAbsolute ?? mobilityDefault;
 
   const hospitalBedsFactor = hospitalBedsValue / hospitalBedsDefault;
   const icuBedsFactor = icuBedsValue / icuBedsDefault;
@@ -253,6 +255,7 @@ export default function ParameterPanel({
   const literacyFactor = literacyValue / literacyDefault;
   const urbanPctFactor = urbanPctValue / (urbanPctDefault || 1);
   const employmentFactor = employmentValue / (employmentDefault || 1);
+  const mobilityFactor = mobilityValue / (mobilityDefault || 1);
   const densityDefault = context?.baseline?.density || density;
   const densityValue = params.densityAbsolute ?? densityDefault;
   const densityFactorDisplay = densityValue / densityDefault;
@@ -279,6 +282,7 @@ export default function ParameterPanel({
         vulnLiteracyAbsolute: literacyDefault,
         vulnUrbanPctAbsolute: urbanPctDefault,
         vulnEmploymentAbsolute: employmentDefault,
+        vulnMobilityAbsolute: mobilityDefault,
         densityAbsolute: densityDefault,
       });
     }
@@ -665,6 +669,19 @@ export default function ParameterPanel({
             secondary={`factor ×${employmentFactor.toFixed(2)}`}
             onChange={set("vulnEmploymentAbsolute")}
             color="var(--amber)"
+            disabled={!canEditVulnerability}
+          />
+          <SliderRow
+            label="Mobility Exposure Score"
+            desc={`Original Value: ${mobilityDefault.toFixed(1)} / 100`}
+            value={mobilityValue}
+            min={0}
+            max={100}
+            step={0.1}
+            format={(v) => `${v.toFixed(1)} / 100`}
+            secondary={`factor ×${mobilityFactor.toFixed(2)}`}
+            onChange={set("vulnMobilityAbsolute")}
+            color="var(--red)"
             disabled={!canEditVulnerability}
           />
           <button

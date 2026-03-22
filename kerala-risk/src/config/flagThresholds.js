@@ -74,6 +74,22 @@ export const FLAG_THRESHOLDS = {
     metric: "density",
     description: "Population density > 1,200 /km²",
   },
+  mobility_high: {
+    threshold: 70,
+    operator: ">=",
+    label: "High Mobility",
+    severity: "medium",
+    metric: "mobility_exposure_score",
+    description: "Mobility exposure score ≥ 70",
+  },
+  mobility_low: {
+    threshold: 25,
+    operator: "<",
+    label: "Low Mobility",
+    severity: "medium",
+    metric: "mobility_exposure_score",
+    description: "Mobility exposure score < 25",
+  },
 };
 
 /**

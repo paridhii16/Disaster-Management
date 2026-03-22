@@ -1,0 +1,15 @@
+district,mobility_activity_index,stay_home_index,avg_retail_change,avg_workplace_change,avg_transit_change,mobility_exposure_score
+Malappuram,46.58,19.64,19.08,19.81,13.94,100.0
+Palakkad,41.93,20.16,3.6,13.95,3.58,89.0
+Kasaragod,34.34,18.57,3.68,10.77,8.63,71.0
+Pathanamthitta,34.27,17.6,14.86,15.76,-9.4,70.9
+Kozhikode,33.59,20.54,1.22,5.71,1.51,69.3
+Kannur,31.6,20.32,3.5,12.62,-3.45,64.6
+Alappuzha,31.35,20.63,13.07,8.63,11.76,64.0
+Wayanad,29.43,22.14,-3.83,11.48,1.35,59.4
+Kottayam,25.15,20.83,-1.75,2.03,-0.21,49.3
+Kollam,24.54,19.65,14.84,10.38,-0.23,47.8
+Thrissur,17.87,19.75,2.78,6.71,-1.83,32.1
+Idukki,17.02,20.02,4.61,15.7,13.38,30.1
+Ernakulam,11.26,17.79,-8.41,-4.84,-3.74,16.4
+Thiruvananthapuram,4.32,15.95,-4.87,-1.95,1.49,0.0

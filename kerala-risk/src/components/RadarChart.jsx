@@ -4,6 +4,12 @@ const AXES = [
   { key: "literacy_rate", label: "Literacy", max: 100, invert: false },
   { key: "beds_per_1000", label: "Beds / 1k", max: 2, invert: false },
   { key: "gddp_per_capita", label: "GDP Index", max: 500000, invert: false },
+  {
+    key: "mobility_exposure_score",
+    label: "Low Mobility",
+    max: 100,
+    invert: true,
+  },
   { key: "unemployment_proxy", label: "Low Unempl.", max: 80, invert: true },
   { key: "density", label: "Low Density", max: 1600, invert: true },
 ];

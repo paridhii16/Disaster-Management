@@ -34,6 +34,12 @@ const METRIC_OPTIONS = [
     max: 100,
     higherBad: true,
   },
+  {
+    value: "mobility_exposure_score",
+    label: "Mobility Exposure Score",
+    max: 100,
+    higherBad: true,
+  },
   { value: "density", label: "Population Density", max: 1600, higherBad: true },
   {
     value: "beds_per_1000",
@@ -59,6 +65,16 @@ function getColor(d, metric) {
   if (!d) return "rgba(80,100,140,0.35)";
   const cfg = METRIC_OPTIONS.find((m) => m.value === metric);
   const norm = Math.min(1, Math.max(0, d[metric] / cfg.max));
+
+  if (metric === "mobility_exposure_score") {
+    const start = { r: 245, g: 166, b: 35 }; // yellow/amber
+    const end = { r: 240, g: 82, b: 82 }; // red
+    const r = Math.round(start.r + (end.r - start.r) * norm);
+    const g = Math.round(start.g + (end.g - start.g) * norm);
+    const b = Math.round(start.b + (end.b - start.b) * norm);
+    return `rgba(${r},${g},${b},0.84)`;
+  }
+
   const score = cfg.higherBad ? norm * 100 : (1 - norm) * 100;
   return riskColor(score, 0.84);
 }
@@ -367,6 +383,11 @@ export default function KeralaMap({ districts, selectedDistrict, onSelect }) {
                 riskColor(tooltip.d.vulnerability),
               ],
               [
+                "Mobility Exposure",
+                `${Number(tooltip.d.mobility_exposure_score || 0).toFixed(1)}/100`,
+                null,
+              ],
+              [
                 "Population",
                 `${(tooltip.d.population / 1e6).toFixed(2)}M`,
                 null,
@@ -418,9 +439,23 @@ export default function KeralaMap({ districts, selectedDistrict, onSelect }) {
             {cfg?.label}
           </div>
           {[
-            ["var(--red)", cfg?.higherBad ? "High (risk)" : "High (good)"],
-            ["var(--amber)", "Moderate"],
-            ["var(--teal)", cfg?.higherBad ? "Low (safe)" : "Low (concern)"],
+            ...(metric === "mobility_exposure_score"
+              ? [
+                  ["var(--red)", "High Mobility"],
+                  ["var(--amber)", "Moderate Mobility"],
+                  ["#f5a623", "Low Mobility"],
+                ]
+              : [
+                  [
+                    "var(--red)",
+                    cfg?.higherBad ? "High (risk)" : "High (good)",
+                  ],
+                  ["var(--amber)", "Moderate"],
+                  [
+                    "var(--teal)",
+                    cfg?.higherBad ? "Low (safe)" : "Low (concern)",
+                  ],
+                ]),
           ].map(([color, label]) => (
             <div
               key={label}
