@@ -202,6 +202,9 @@ export function computeDiseaseRisk(districts, params) {
   const employmentValues = districts.map(
     (d) => Number(d.unemployment_proxy) || 0,
   );
+  const mobilityValues = districts.map(
+    (d) => Number(d.mobility_exposure_score) || 0,
+  );
 
   const urbanMin = Math.min(...urbanValues);
   const urbanRange = Math.max(1, Math.max(...urbanValues) - urbanMin);
@@ -210,6 +213,8 @@ export function computeDiseaseRisk(districts, params) {
     1,
     Math.max(...employmentValues) - employmentMin,
   );
+  const mobilityMin = Math.min(...mobilityValues);
+  const mobilityRange = Math.max(1, Math.max(...mobilityValues) - mobilityMin);
 
   const raw = districts.map((d) => {
     const adjustedDensity = (d.density || 0) * densityScale;
@@ -268,6 +273,13 @@ export function computeDiseaseRisk(districts, params) {
         ((Number(d.unemployment_proxy) || 0) - employmentMin) / employmentRange,
       ),
     );
+    const mobilityDeficit = Math.min(
+      1,
+      Math.max(
+        0,
+        ((Number(d.mobility_exposure_score) || 0) - mobilityMin) / mobilityRange,
+      ),
+    );
 
     // frailty: weighted average deficit (equal weights, 0–1)
     const frailtyDimensions = [
@@ -276,6 +288,7 @@ export function computeDiseaseRisk(districts, params) {
       litDeficit,
       urbanDeficit,
       employmentDeficit,
+      mobilityDeficit,
     ];
     const frailty =
       frailtyDimensions.reduce((sum, value) => sum + value, 0) /

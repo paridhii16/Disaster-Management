@@ -26,7 +26,25 @@ export function useDistrictData() {
   useEffect(() => {
     async function load() {
       try {
-        const rows = await loadCSV("districts.csv");
+        const [rows, mobilityRows] = await Promise.all([
+          loadCSV("districts.csv"),
+          loadCSV("kerala_mobility_summary.csv").catch(() => []),
+        ]);
+
+        const mobilityByDistrict = new Map(
+          mobilityRows.map((row) => [
+            row.district,
+            {
+              mobility_activity_index: Number(row.mobility_activity_index),
+              stay_home_index: Number(row.stay_home_index),
+              mobility_exposure_score: Number(row.mobility_exposure_score),
+              avg_retail_change: Number(row.avg_retail_change),
+              avg_workplace_change: Number(row.avg_workplace_change),
+              avg_transit_change: Number(row.avg_transit_change),
+            },
+          ]),
+        );
+
         // Numeric coercion safety pass
         const clean = rows.map((r) => ({
           ...r,
@@ -50,6 +68,14 @@ export function useDistrictData() {
           vax_rate: Number(r.vax_rate),
           unemployment_proxy: Number(r.unemployment_proxy),
           vulnerability: Number(r.vulnerability),
+          ...(mobilityByDistrict.get(r.district) || {
+            mobility_activity_index: 0,
+            stay_home_index: 0,
+            mobility_exposure_score: 0,
+            avg_retail_change: 0,
+            avg_workplace_change: 0,
+            avg_transit_change: 0,
+          }),
         }));
         const withDerivedIcu = clean.map((district) => ({
           ...district,

@@ -60,6 +60,7 @@ export default function DiseasePage({ districts }) {
       district: "Kerala (State)",
       population: totalPop,
       density: mean("density"),
+      mobility_exposure_score: mean("mobility_exposure_score"),
       beds_per_1000: mean("beds_per_1000"),
       icu_beds_per_1000: meanIcuPer1000,
       gddp_per_capita: mean("gddp_per_capita"),
@@ -107,6 +108,9 @@ export default function DiseasePage({ districts }) {
         vulnEmploymentAbsolute:
           selectedRawDistrict?.unemployment_proxy ??
           stateBaseline.unemployment_proxy,
+        vulnMobilityAbsolute:
+          selectedRawDistrict?.mobility_exposure_score ??
+          stateBaseline.mobility_exposure_score,
         densityAbsolute: selectedRawDistrict?.density ?? stateBaseline.density,
       };
     }
@@ -125,6 +129,9 @@ export default function DiseasePage({ districts }) {
         globalParams.vulnUrbanPctAbsolute ?? stateBaseline.urban_pct,
       vulnEmploymentAbsolute:
         globalParams.vulnEmploymentAbsolute ?? stateBaseline.unemployment_proxy,
+      vulnMobilityAbsolute:
+        globalParams.vulnMobilityAbsolute ??
+        stateBaseline.mobility_exposure_score,
       densityAbsolute: globalParams.densityAbsolute ?? stateBaseline.density,
     };
   }, [
@@ -220,6 +227,8 @@ export default function DiseasePage({ districts }) {
           urban_pct: override.vulnUrbanPctAbsolute ?? d.urban_pct,
           unemployment_proxy:
             override.vulnEmploymentAbsolute ?? d.unemployment_proxy,
+          mobility_exposure_score:
+            override.vulnMobilityAbsolute ?? d.mobility_exposure_score,
           density: override.densityAbsolute ?? d.density,
         };
       });

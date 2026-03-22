@@ -264,6 +264,13 @@ export default function DetailPanel({ district, onClose }) {
         color="var(--amber)"
         suffix="%"
       />
+      <MetricBar
+        label="Mobility Exposure Score"
+        value={d.mobility_exposure_score || 0}
+        max={100}
+        color="var(--red)"
+        suffix="/100"
+      />
 
       <hr
         style={{
