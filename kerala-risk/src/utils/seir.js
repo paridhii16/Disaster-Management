@@ -24,46 +24,65 @@
 
 // ── Disease presets ───────────────────────────────────────────────────────────
 export const DISEASE_PRESETS = {
-  covid: {
-    label: "COVID-19",
-    beta: 0.35,
+  original: {
+    label: "Alpha-Original",
+    beta: 0.25,
     sigma: 0.196,
     gamma: 0.071,
     ifr: 0.012,
     color: "#4f7eff",
     description:
-      "SARS-CoV-2 : airborne, moderate lethality, high transmissibility",
+      "Initial SARS-CoV-2 (Alpha-Original) strain : airborne, moderate transmissibility",
   },
-  nipah: {
-    label: "Nipah Virus",
-    beta: 0.1, // adjusted from R0 ≈ 0.7–1.0
-    sigma: 0.1, // ~10 day incubation
-    gamma: 0.14, // ~7 day infectious period
-    ifr: 0.6, // conservative average
+  alpha_beta: {
+    label: "Beta",
+    beta: 0.35,
+    sigma: 0.196,
+    gamma: 0.071,
+    ifr: 0.015,
+    color: "#f5a623",
+    description:
+      "Beta variant : higher transmissibility, slightly higher severity",
+  },
+  delta: {
+    label: "Delta",
+    beta: 0.50,
+    sigma: 0.196,
+    gamma: 0.071,
+    ifr: 0.02,
     color: "#f05252",
     description:
-      "Nipah (Kerala/Bangladesh) : zoonotic, low transmissibility, very high fatality",
+      "Delta variant : highly contagious, shorter incubation, increased severity",
   },
 };
 
 export const DEFAULT_PARAMS = {
-  covid: {
-    r0: 4.93, // intrinsic R0 = beta / gamma
-    beta: 0.35, // derived: r0 * gamma
+  original: {
+    r0: 3.52,
+    beta: 0.25,
     sigma: 0.196,
     gamma: 0.071,
     ifr: 0.012,
     days: 300,
     interventionRate: 0.2,
   },
-  nipah: {
-    r0: 0.72,
-    beta: 0.09,
-    sigma: 0.071,
-    gamma: 0.125,
-    ifr: 0.65,
-    days: 120,
-    interventionRate: 0.5,
+  alpha_beta: {
+    r0: 4.93,
+    beta: 0.35,
+    sigma: 0.196,
+    gamma: 0.071,
+    ifr: 0.015,
+    days: 300,
+    interventionRate: 0.3,
+  },
+  delta: {
+    r0: 7.04,
+    beta: 0.50,
+    sigma: 0.196,
+    gamma: 0.071,
+    ifr: 0.02,
+    days: 300,
+    interventionRate: 0.4,
   },
 };
 

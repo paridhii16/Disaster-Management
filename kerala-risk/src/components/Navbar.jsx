@@ -36,9 +36,9 @@ export default function Navbar({ page, onPageChange }) {
           }}
         />
         <span
-          style={{ fontFamily: "var(--head)", fontSize: 18, fontWeight: 600 }}
+          style={{ fontFamily: "var(--head)", fontSize: 20, fontWeight: 700, letterSpacing: "-0.5px" }}
         >
-          Kerala<span style={{ color: "var(--accent)" }}>Risk</span>Watch
+          Threat<span style={{ color: "var(--accent)" }}>Scope</span>
         </span>
       </div>
 
