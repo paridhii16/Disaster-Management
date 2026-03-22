@@ -210,7 +210,7 @@ export default function ParameterPanel({
   currentR0,
   sectionMode = "all",
 }) {
-  const preset = DISEASE_PRESETS[diseaseKey] || DISEASE_PRESETS.covid;
+  const preset = DISEASE_PRESETS[diseaseKey] || DISEASE_PRESETS.original;
 
   function set(key) {
     return (val) => onChange({ ...params, [key]: val });

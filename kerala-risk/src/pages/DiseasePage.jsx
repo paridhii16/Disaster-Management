@@ -11,16 +11,16 @@ import {
 import { computeVulnerability } from "../utils/vulnerability";
 
 export default function DiseasePage({ districts }) {
-  const [diseaseKey, setDiseaseKey] = useState("covid");
+  const [diseaseKey, setDiseaseKey] = useState("original");
   // Global params: used when no district is selected; base defaults for districts
-  const [globalParams, setGlobalParams] = useState(DEFAULT_PARAMS.covid);
+  const [globalParams, setGlobalParams] = useState(DEFAULT_PARAMS.original);
   // Per-district overrides: Map<districtName, fullPanelParams>
   const [districtOverrides, setDistrictOverrides] = useState(() => new Map());
   const [selectedDistrict, setSelectedDistrict] = useState(null);
 
   function handleDiseaseChange(key) {
     setDiseaseKey(key);
-    setGlobalParams(DEFAULT_PARAMS[key] || DEFAULT_PARAMS.covid);
+    setGlobalParams(DEFAULT_PARAMS[key] || DEFAULT_PARAMS.original);
     setDistrictOverrides(new Map());
     setSelectedDistrict(null);
   }
@@ -391,13 +391,18 @@ export default function DiseasePage({ districts }) {
                   padding: "8px 10px",
                   borderRadius: 8,
                   border: "1px solid var(--border)",
-                  background: "rgba(255,255,255,.03)",
+                  background: "var(--bg3)",
                   color: "var(--text)",
                   fontSize: 13,
+                  outline: "none",
                 }}
               >
                 {Object.entries(DISEASE_PRESETS).map(([key, p]) => (
-                  <option key={key} value={key}>
+                  <option 
+                    key={key} 
+                    value={key} 
+                    style={{ background: "var(--bg2)", color: "var(--text)" }}
+                  >
                     {p.label}
                   </option>
                 ))}

@@ -125,8 +125,12 @@ export default function ExposurePanel({ districts, selected }) {
     : districts.map((x) => ({
         name:
           x.district.length > 9 ? x.district.substring(0, 9) + "…" : x.district,
+        fullDistrictName: x.district,
         Rural: x.rural_pct,
         Urban: x.urban_pct,
+        ruralPop: x.rural_pop,
+        urbanPop: x.urban_pop,
+        totalPop: x.population,
       }));
 
   const gdpData = useMemo(
@@ -305,7 +309,39 @@ export default function ExposurePanel({ districts, selected }) {
                     tickFormatter={(v) => `${v}%`}
                     domain={[0, 100]}
                   />
-                  <Tooltip content={<DarkTooltip />} />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (!active || !payload?.length) return null;
+                      const data = payload[0].payload;
+                      return (
+                        <div
+                          style={{
+                            background: "rgba(6,11,22,.95)",
+                            border: "1px solid var(--border2)",
+                            borderRadius: 7,
+                            padding: "10px 14px",
+                            fontSize: 12,
+                          }}
+                        >
+                          <div style={{ color: "var(--text)", fontWeight: 500, marginBottom: 8 }}>
+                            {data.fullDistrictName || data.name}
+                          </div>
+                          <div style={{ display: "flex", justifyContent: "space-between", gap: 16, color: "#00c9a7", marginBottom: 3 }}>
+                            <span>Rural ({data.Rural}%)</span>
+                            <span style={{ fontWeight: 500 }}>{(data.ruralPop || 0).toLocaleString()}</span>
+                          </div>
+                          <div style={{ display: "flex", justifyContent: "space-between", gap: 16, color: "#4f7eff", marginBottom: 8 }}>
+                            <span>Urban ({data.Urban}%)</span>
+                            <span style={{ fontWeight: 500 }}>{(data.urbanPop || 0).toLocaleString()}</span>
+                          </div>
+                          <div style={{ display: "flex", justifyContent: "space-between", gap: 16, color: "var(--muted)", paddingTop: 6, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+                            <span>Total Pop</span>
+                            <span style={{ fontWeight: 500 }}>{(data.totalPop || 0).toLocaleString()}</span>
+                          </div>
+                        </div>
+                      );
+                    }}
+                  />
                   <Bar
                     dataKey="Rural"
                     stackId="a"
