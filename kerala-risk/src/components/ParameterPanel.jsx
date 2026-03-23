@@ -256,11 +256,11 @@ export default function ParameterPanel({
   const densityValue = params.densityAbsolute ?? densityDefault;
   const densityFactorDisplay = densityValue / densityDefault;
 
-  const hospitalBedsMax = 1000;
+  const hospitalBedsMax = 500;
   const hospitalBedsStep = 0.01;
   const icuBedsMax = 1000;
   const icuBedsStep = 0.001;
-  const gdpMax = Math.max(900000, gdpDefault * 3);
+  const gdpMax = gdpDefault * 50;
   const literacyMax = 100;
   const densityMax = Math.max(3000, densityDefault * 5);
 
@@ -703,8 +703,7 @@ export default function ParameterPanel({
             secondary={`factor ×${(
               (params.investmentAbsolute ??
                 context?.baseline?.investment_core_crore ??
-                1) /
-              Math.max(1, context?.baseline?.investment_core_crore ?? 1)
+                1) / Math.max(1, context?.baseline?.investment_core_crore ?? 1)
             ).toFixed(2)}`}
             onChange={set("investmentAbsolute")}
             color="var(--accent)"

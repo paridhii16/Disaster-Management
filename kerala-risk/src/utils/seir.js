@@ -307,7 +307,7 @@ export function computeDiseaseRisk(districts, params) {
   return raw.map((d) => ({
     ...d,
     diseaseRisk: parseFloat(
-      Math.min(100, d._rawRisk * RISK_CALIBRATION).toFixed(1),
+      Math.min(100, d._rawRisk * RISK_CALIBRATION + 15).toFixed(1),
     ),
   }));
 }
