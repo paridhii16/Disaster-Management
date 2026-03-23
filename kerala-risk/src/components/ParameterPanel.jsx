@@ -290,7 +290,7 @@ export default function ParameterPanel({
   const showResetAll = sectionMode !== "vulnerability";
   const headerTitle =
     sectionMode === "vulnerability"
-      ? "Vulnerability Parameters"
+      ? "Other Parameters"
       : "Simulation Parameters";
   const [activeSimulationSection, setActiveSimulationSection] =
     useState("intervention");
@@ -640,7 +640,7 @@ export default function ParameterPanel({
             color="var(--amber)"
             disabled={!canEditVulnerability}
           />
-          <SliderRow
+          {/* <SliderRow
             label="Urban Population Share"
             desc={`Original Value: ${urbanPctDefault.toFixed(1)}%`}
             value={urbanPctValue}
@@ -652,7 +652,7 @@ export default function ParameterPanel({
             onChange={set("vulnUrbanPctAbsolute")}
             color="var(--teal)"
             disabled={!canEditVulnerability}
-          />
+          /> */}
           <SliderRow
             label="Employment Stress (Non-workers Seeking Work)"
             desc={`Original Value: ${employmentDefault.toFixed(2)}%`}
@@ -664,6 +664,50 @@ export default function ParameterPanel({
             secondary={`factor ×${employmentFactor.toFixed(2)}`}
             onChange={set("vulnEmploymentAbsolute")}
             color="var(--amber)"
+            disabled={!canEditVulnerability}
+          />
+          <SliderRow
+            label="Mobility Exposure Score"
+            desc={`Original Value: ${(context?.baseline?.mobility_exposure_score || 0).toFixed(1)} / 100`}
+            value={
+              params.mobilityAbsolute ??
+              context?.baseline?.mobility_exposure_score ??
+              0
+            }
+            min={0}
+            max={100}
+            step={0.1}
+            format={(v) => `${v.toFixed(1)} / 100`}
+            secondary={`factor ×${(
+              (params.mobilityAbsolute ??
+                context?.baseline?.mobility_exposure_score ??
+                1) /
+              Math.max(0.01, context?.baseline?.mobility_exposure_score ?? 1)
+            ).toFixed(2)}`}
+            onChange={set("mobilityAbsolute")}
+            color="var(--red)"
+            disabled={!canEditVulnerability}
+          />
+          <SliderRow
+            label="Core Investment (₹ crore)"
+            desc={`Original Value: ₹${(context?.baseline?.investment_core_crore || 0).toFixed(0)} cr`}
+            value={
+              params.investmentAbsolute ??
+              context?.baseline?.investment_core_crore ??
+              0
+            }
+            min={0}
+            max={8000}
+            step={10}
+            format={(v) => `₹${Math.round(v).toLocaleString()} cr`}
+            secondary={`factor ×${(
+              (params.investmentAbsolute ??
+                context?.baseline?.investment_core_crore ??
+                1) /
+              Math.max(1, context?.baseline?.investment_core_crore ?? 1)
+            ).toFixed(2)}`}
+            onChange={set("investmentAbsolute")}
+            color="var(--accent)"
             disabled={!canEditVulnerability}
           />
           <button

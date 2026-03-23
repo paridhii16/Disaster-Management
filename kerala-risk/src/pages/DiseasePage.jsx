@@ -113,6 +113,8 @@ export default function DiseasePage({ districts }) {
           selectedRawDistrict?.unemployment_proxy ??
           stateBaseline.unemployment_proxy,
         densityAbsolute: selectedRawDistrict?.density ?? stateBaseline.density,
+        mobilityScale: globalParams.mobilityScale ?? 1.0,
+        investmentScale: globalParams.investmentScale ?? 1.0,
       };
     }
     // State level: use globalParams, falling back to stateBaseline for vuln abs
@@ -131,6 +133,8 @@ export default function DiseasePage({ districts }) {
       vulnEmploymentAbsolute:
         globalParams.vulnEmploymentAbsolute ?? stateBaseline.unemployment_proxy,
       densityAbsolute: globalParams.densityAbsolute ?? stateBaseline.density,
+      mobilityScale: globalParams.mobilityScale ?? 1.0,
+      investmentScale: globalParams.investmentScale ?? 1.0,
     };
   }, [
     selectedDistrict,
@@ -226,6 +230,10 @@ export default function DiseasePage({ districts }) {
           unemployment_proxy:
             override.vulnEmploymentAbsolute ?? d.unemployment_proxy,
           density: override.densityAbsolute ?? d.density,
+          mobility_exposure_score:
+            override.mobilityAbsolute ?? d.mobility_exposure_score,
+          investment_core_crore:
+            override.investmentAbsolute ?? d.investment_core_crore,
         };
       });
 
