@@ -1,21 +1,33 @@
-import React from 'react';
+import React from "react";
 
 function Stat({ label, value, sub, color }) {
   return (
-    <div className="card" style={{ padding: '18px 22px' }}>
-      <div style={{
-        fontSize: 11.5, color: 'var(--muted)', marginBottom: 6,
-        textTransform: 'uppercase', letterSpacing: '0.8px',
-      }}>
+    <div className="card" style={{ padding: "18px 22px" }}>
+      <div
+        style={{
+          fontSize: 11.5,
+          color: "var(--muted)",
+          marginBottom: 6,
+          textTransform: "uppercase",
+          letterSpacing: "0.8px",
+        }}
+      >
         {label}
       </div>
-      <div style={{
-        fontFamily: 'var(--head)', fontSize: 32, fontWeight: 600,
-        lineHeight: 1, color,
-      }}>
+      <div
+        style={{
+          fontFamily: "var(--head)",
+          fontSize: 32,
+          fontWeight: 600,
+          lineHeight: 1,
+          color,
+        }}
+      >
         {value}
       </div>
-      <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 5 }}>{sub}</div>
+      <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 5 }}>
+        {sub}
+      </div>
     </div>
   );
 }
@@ -23,17 +35,28 @@ function Stat({ label, value, sub, color }) {
 export default function StatBar({ districts }) {
   if (!districts.length) return null;
 
-  const byVuln    = [...districts].sort((a, b) => b.vulnerability - a.vulnerability);
-  const mean      = (districts.reduce((s, d) => s + d.vulnerability, 0) / districts.length).toFixed(1);
-  const minBed    = [...districts].sort((a, b) => a.beds_per_1000 - b.beds_per_1000)[0];
-  // Highest exposure = highest population density (most exposed to disease spread)
-  const maxDensity = [...districts].sort((a, b) => b.density - a.density)[0];
+  const byVuln = [...districts].sort(
+    (a, b) => b.vulnerability - a.vulnerability,
+  );
+  const mean = (
+    districts.reduce((s, d) => s + d.vulnerability, 0) / districts.length
+  ).toFixed(1);
+  const minBed = [...districts].sort(
+    (a, b) => a.beds_per_1000 - b.beds_per_1000,
+  )[0];
+  const maxExposure = [...districts].sort(
+    (a, b) => (b.exposure_index || 0) - (a.exposure_index || 0),
+  )[0];
 
   return (
-    <div style={{
-      display: 'grid', gridTemplateColumns: 'repeat(4,1fr)',
-      gap: 16, marginBottom: 20,
-    }}>
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(4,1fr)",
+        gap: 16,
+        marginBottom: 20,
+      }}
+    >
       <Stat
         label="Highest Vulnerability"
         value={byVuln[0].vulnerability}
@@ -54,8 +77,8 @@ export default function StatBar({ districts }) {
       />
       <Stat
         label="Highest Exposure"
-        value={maxDensity.density.toLocaleString()}
-        sub={`${maxDensity.district} · persons/km²`}
+        value={Number(maxExposure.exposure_index || 0).toFixed(1)}
+        sub={`${maxExposure.district} · exposure index /100`}
         color="var(--amber)"
       />
     </div>

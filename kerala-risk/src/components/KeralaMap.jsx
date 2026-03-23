@@ -388,6 +388,16 @@ export default function KeralaMap({ districts, selectedDistrict, onSelect }) {
                 null,
               ],
               [
+                "Core Investment",
+                `₹${Number(tooltip.d.investment_core_crore || 0).toFixed(1)} cr`,
+                null,
+              ],
+              [
+                "Exposure Index",
+                `${Number(tooltip.d.exposure_index || 0).toFixed(1)}/100`,
+                null,
+              ],
+              [
                 "Population",
                 `${(tooltip.d.population / 1e6).toFixed(2)}M`,
                 null,

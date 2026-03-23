@@ -1,6 +1,17 @@
 import { useState, useEffect } from "react";
 import { loadCSV } from "../utils/csvLoader";
 import { computeVulnerability } from "../utils/vulnerability";
+import { computeExposureMetrics } from "../utils/exposure";
+
+const ENTERPRISE_DISTRICT_ALIASES = {
+  tvm: "Thiruvananthapuram",
+};
+
+function normalizeDistrictName(name) {
+  const normalized = String(name || "").trim();
+  const key = normalized.toLowerCase();
+  return ENTERPRISE_DISTRICT_ALIASES[key] || normalized;
+}
 
 /**
  * Central data hook.
@@ -26,23 +37,39 @@ export function useDistrictData() {
   useEffect(() => {
     async function load() {
       try {
-        const [rows, mobilityRows] = await Promise.all([
+        const [rows, mobilityRows, enterpriseRows] = await Promise.all([
           loadCSV("districts.csv"),
-          loadCSV("kerala_mobility_summary.csv").catch(() => []),
+          loadCSV("kerala_mobility_summary_v2.csv")
+            .catch(() => loadCSV("kerala_mobility_summary.csv"))
+            .catch(() => []),
+          loadCSV("district-wise-enterprises-data.csv").catch(() => []),
         ]);
 
         const mobilityByDistrict = new Map(
           mobilityRows.map((row) => [
             row.district,
             {
-              mobility_activity_index: Number(row.mobility_activity_index),
-              stay_home_index: Number(row.stay_home_index),
               mobility_exposure_score: Number(row.mobility_exposure_score),
-              avg_retail_change: Number(row.avg_retail_change),
-              avg_workplace_change: Number(row.avg_workplace_change),
-              avg_transit_change: Number(row.avg_transit_change),
+              air_traffic_total: Number(
+                row.air_traffic_total ?? row.air_total ?? 0,
+              ),
+              total_vehicles: Number(
+                row.total_vehicles ?? row.vehicles_total ?? 0,
+              ),
+              total_tourism: Number(
+                row.total_tourism ?? row.tourism_total ?? 0,
+              ),
             },
           ]),
+        );
+
+        const investmentByDistrict = new Map(
+          enterpriseRows.map((row) => {
+            const district = normalizeDistrictName(
+              row.District || row.district,
+            );
+            return [district, Number(row["Investment Rs in Crore"] || 0)];
+          }),
         );
 
         // Numeric coercion safety pass
@@ -69,13 +96,17 @@ export function useDistrictData() {
           unemployment_proxy: Number(r.unemployment_proxy),
           vulnerability: Number(r.vulnerability),
           ...(mobilityByDistrict.get(r.district) || {
-            mobility_activity_index: 0,
-            stay_home_index: 0,
             mobility_exposure_score: 0,
+            air_traffic_total: 0,
+            total_vehicles: 0,
+            total_tourism: 0,
             avg_retail_change: 0,
             avg_workplace_change: 0,
             avg_transit_change: 0,
           }),
+          investment_core_crore: Number(
+            investmentByDistrict.get(r.district) || 0,
+          ),
         }));
         const withDerivedIcu = clean.map((district) => ({
           ...district,
@@ -85,7 +116,8 @@ export function useDistrictData() {
               ? district.icu_beds_per_1000
               : (district.icu_beds / (district.population || 1)) * 1000,
         }));
-        setDistricts(computeVulnerability(withDerivedIcu));
+        const withExposure = computeExposureMetrics(withDerivedIcu);
+        setDistricts(computeVulnerability(withExposure));
       } catch (e) {
         setError(e.message);
       } finally {

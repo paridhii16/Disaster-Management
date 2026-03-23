@@ -9,6 +9,7 @@ import {
   DEFAULT_PARAMS,
 } from "../utils/seir";
 import { computeVulnerability } from "../utils/vulnerability";
+import { computeExposureMetrics } from "../utils/exposure";
 
 export default function DiseasePage({ districts }) {
   const [diseaseKey, setDiseaseKey] = useState("original");
@@ -69,6 +70,9 @@ export default function DiseasePage({ districts }) {
       urban_pct: mean("urban_pct"),
       unemployment_proxy: mean("unemployment_proxy"),
       vulnerability: mean("vulnerability"),
+      investment_core_crore: mean("investment_core_crore"),
+      exposure_score: mean("exposure_score"),
+      exposure_index: mean("exposure_index"),
     };
   }, [districts, getIcuBedsPer1000]);
 
@@ -108,9 +112,6 @@ export default function DiseasePage({ districts }) {
         vulnEmploymentAbsolute:
           selectedRawDistrict?.unemployment_proxy ??
           stateBaseline.unemployment_proxy,
-        vulnMobilityAbsolute:
-          selectedRawDistrict?.mobility_exposure_score ??
-          stateBaseline.mobility_exposure_score,
         densityAbsolute: selectedRawDistrict?.density ?? stateBaseline.density,
       };
     }
@@ -129,9 +130,6 @@ export default function DiseasePage({ districts }) {
         globalParams.vulnUrbanPctAbsolute ?? stateBaseline.urban_pct,
       vulnEmploymentAbsolute:
         globalParams.vulnEmploymentAbsolute ?? stateBaseline.unemployment_proxy,
-      vulnMobilityAbsolute:
-        globalParams.vulnMobilityAbsolute ??
-        stateBaseline.mobility_exposure_score,
       densityAbsolute: globalParams.densityAbsolute ?? stateBaseline.density,
     };
   }, [
@@ -173,7 +171,7 @@ export default function DiseasePage({ districts }) {
 
   // ── BASELINE risk (global defaults, original CSV data, all districts) ──────
   const vulnerabilityAlignedDistricts = useMemo(
-    () => computeVulnerability(districts),
+    () => computeVulnerability(computeExposureMetrics(districts)),
     [districts],
   );
 
@@ -227,8 +225,6 @@ export default function DiseasePage({ districts }) {
           urban_pct: override.vulnUrbanPctAbsolute ?? d.urban_pct,
           unemployment_proxy:
             override.vulnEmploymentAbsolute ?? d.unemployment_proxy,
-          mobility_exposure_score:
-            override.vulnMobilityAbsolute ?? d.mobility_exposure_score,
           density: override.densityAbsolute ?? d.density,
         };
       });
@@ -245,7 +241,7 @@ export default function DiseasePage({ districts }) {
       };
 
       const overrideResults = computeDiseaseRisk(
-        computeVulnerability(modifiedDistricts),
+        computeVulnerability(computeExposureMetrics(modifiedDistricts)),
         overrideRiskParams,
       );
       const overriddenDistrict = overrideResults.find(
@@ -407,9 +403,9 @@ export default function DiseasePage({ districts }) {
                 }}
               >
                 {Object.entries(DISEASE_PRESETS).map(([key, p]) => (
-                  <option 
-                    key={key} 
-                    value={key} 
+                  <option
+                    key={key}
+                    value={key}
                     style={{ background: "var(--bg2)", color: "var(--text)" }}
                   >
                     {p.label}

@@ -233,6 +233,27 @@ export default function DetailPanel({ district, onClose }) {
         color="var(--red)"
         suffix=" /km²"
       />
+      <MetricBar
+        label="Core Investment (₹ crore)"
+        value={d.investment_core_crore || 0}
+        max={4000}
+        color="var(--accent)"
+        suffix=" cr"
+      />
+      <MetricBar
+        label="Mobility Exposure Score"
+        value={d.mobility_exposure_score || 0}
+        max={100}
+        color="var(--red)"
+        suffix="/100"
+      />
+      <MetricBar
+        label="Exposure Index (Final)"
+        value={d.exposure_index || 0}
+        max={100}
+        color="var(--amber)"
+        suffix="/100"
+      />
 
       <hr
         style={{
@@ -264,14 +285,6 @@ export default function DetailPanel({ district, onClose }) {
         color="var(--amber)"
         suffix="%"
       />
-      <MetricBar
-        label="Mobility Exposure Score"
-        value={d.mobility_exposure_score || 0}
-        max={100}
-        color="var(--red)"
-        suffix="/100"
-      />
-
       <hr
         style={{
           border: "none",

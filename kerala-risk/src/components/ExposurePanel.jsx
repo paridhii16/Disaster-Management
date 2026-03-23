@@ -100,6 +100,18 @@ export default function ExposurePanel({ districts, selected }) {
       beds_per_1000: (
         districts.reduce((s, x) => s + x.beds_per_1000, 0) / districts.length
       ).toFixed(3),
+      investment_core_crore: (
+        districts.reduce((s, x) => s + (x.investment_core_crore || 0), 0) /
+        districts.length
+      ).toFixed(2),
+      mobility_exposure_score: (
+        districts.reduce((s, x) => s + (x.mobility_exposure_score || 0), 0) /
+        districts.length
+      ).toFixed(1),
+      exposure_index: (
+        districts.reduce((s, x) => s + (x.exposure_index || 0), 0) /
+        districts.length
+      ).toFixed(1),
     }),
     [districts],
   );
@@ -185,6 +197,45 @@ export default function ExposurePanel({ districts, selected }) {
           color="var(--red)"
           suffix=" /km²"
         />
+        <MetricBar
+          label="Core Investment (₹ crore)"
+          value={Number(target.investment_core_crore || 0)}
+          max={4000}
+          color="var(--accent)"
+          suffix=" cr"
+        />
+        <MetricBar
+          label="Mobility Exposure Score"
+          value={Number(target.mobility_exposure_score || 0)}
+          max={100}
+          color="var(--red)"
+          suffix="/100"
+        />
+        <MetricBar
+          label="Exposure Index (Final)"
+          value={Number(target.exposure_index || 0)}
+          max={100}
+          color="var(--amber)"
+          suffix="/100"
+        />
+        <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 6 }}>
+          Min-max normalized: density + core investment + mobility, then final
+          min-max on combined index.
+        </div>
+        <div className="card-hd" style={{ margin: "16px 0" }}>
+          Vulnerability Factors
+          <span
+            style={{
+              fontSize: 11.5,
+              color: "var(--teal)",
+              fontWeight: 400,
+              textTransform: "none",
+              letterSpacing: 0,
+            }}
+          >
+            — {title}
+          </span>
+        </div>
         <MetricBar
           label="GDDP per Capita (₹k)"
           value={Math.round(Number(target.gddp_per_capita) / 1000)}
@@ -323,20 +374,57 @@ export default function ExposurePanel({ districts, selected }) {
                             fontSize: 12,
                           }}
                         >
-                          <div style={{ color: "var(--text)", fontWeight: 500, marginBottom: 8 }}>
+                          <div
+                            style={{
+                              color: "var(--text)",
+                              fontWeight: 500,
+                              marginBottom: 8,
+                            }}
+                          >
                             {data.fullDistrictName || data.name}
                           </div>
-                          <div style={{ display: "flex", justifyContent: "space-between", gap: 16, color: "#00c9a7", marginBottom: 3 }}>
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              gap: 16,
+                              color: "#00c9a7",
+                              marginBottom: 3,
+                            }}
+                          >
                             <span>Rural ({data.Rural}%)</span>
-                            <span style={{ fontWeight: 500 }}>{(data.ruralPop || 0).toLocaleString()}</span>
+                            <span style={{ fontWeight: 500 }}>
+                              {(data.ruralPop || 0).toLocaleString()}
+                            </span>
                           </div>
-                          <div style={{ display: "flex", justifyContent: "space-between", gap: 16, color: "#4f7eff", marginBottom: 8 }}>
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              gap: 16,
+                              color: "#4f7eff",
+                              marginBottom: 8,
+                            }}
+                          >
                             <span>Urban ({data.Urban}%)</span>
-                            <span style={{ fontWeight: 500 }}>{(data.urbanPop || 0).toLocaleString()}</span>
+                            <span style={{ fontWeight: 500 }}>
+                              {(data.urbanPop || 0).toLocaleString()}
+                            </span>
                           </div>
-                          <div style={{ display: "flex", justifyContent: "space-between", gap: 16, color: "var(--muted)", paddingTop: 6, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              gap: 16,
+                              color: "var(--muted)",
+                              paddingTop: 6,
+                              borderTop: "1px solid rgba(255,255,255,0.08)",
+                            }}
+                          >
                             <span>Total Pop</span>
-                            <span style={{ fontWeight: 500 }}>{(data.totalPop || 0).toLocaleString()}</span>
+                            <span style={{ fontWeight: 500 }}>
+                              {(data.totalPop || 0).toLocaleString()}
+                            </span>
                           </div>
                         </div>
                       );

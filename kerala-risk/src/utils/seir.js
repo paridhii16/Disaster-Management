@@ -1,3 +1,5 @@
+import { computeExposureMetrics } from "./exposure";
+
 /**
  * SEIR Epidemic Model Engine — Clean Architecture
  *
@@ -8,8 +10,8 @@
  * ├──────────────┼────────────────────────────────────────────────────────┤
  * │ Hazard       │ Intrinsic pathogen danger: β, σ, γ, IFR               │
  * │              │ Modulated by interventionRate (reduces effective β)    │
- * │ Exposure     │ Population density — scales β via contact rate         │
- * │ Vulnerability│ beds, GDP, literacy → district's ability to cope       │
+ * │ Exposure     │ density + core investment + mobility (min-max index)    │
+ * │ Vulnerability│ beds, GDP, literacy, urban, employment → ability to cope│
  * │              │ vulnerability = baseVulnerability * ifrFactor          │
  * └──────────────┴────────────────────────────────────────────────────────┘
  *
@@ -46,7 +48,7 @@ export const DISEASE_PRESETS = {
   },
   delta: {
     label: "Delta",
-    beta: 0.50,
+    beta: 0.5,
     sigma: 0.196,
     gamma: 0.071,
     ifr: 0.02,
@@ -77,7 +79,7 @@ export const DEFAULT_PARAMS = {
   },
   delta: {
     r0: 7.04,
-    beta: 0.50,
+    beta: 0.5,
     sigma: 0.196,
     gamma: 0.071,
     ifr: 0.02,
@@ -152,10 +154,9 @@ export function runSEIR({
  *      → Once compVuln reaches 1.0 (100%), further frailty increases have no effect.
  *      → This prevents over-weighting of individual deficits.
  *
- *   2. **Exposure saturation** (line ~160)
- *      exposure = Math.min(1, adjustedDensity / MAX_DENSITY)
- *      → Once density reaches MAX_DENSITY, normalized exposure stays at 1.0.
- *      → Increasing density slider beyond 1600 /km² (approx) won't boost risk further.
+ *   2. **Exposure min-max normalization**
+ *      exposure dimensions: density + core investment + mobility
+ *      each dimension is min-max normalized, averaged, then min-max normalized again.
  *
  *   3. **Final risk saturation** (line ~178)
  *      diseaseRisk = Math.min(100, d._rawRisk * RISK_CALIBRATION)
@@ -184,10 +185,6 @@ export function computeDiseaseRisk(districts, params) {
   } = params;
 
   const REF_DENSITY = 800;
-  const MAX_DENSITY = districts.reduce(
-    (m, d) => Math.max(m, (d.density || 0) * densityScale),
-    1,
-  );
 
   // Kerala reference bounds for deficit normalisation
   // (covers the full realistic range + some headroom for slider overrides)
@@ -202,9 +199,6 @@ export function computeDiseaseRisk(districts, params) {
   const employmentValues = districts.map(
     (d) => Number(d.unemployment_proxy) || 0,
   );
-  const mobilityValues = districts.map(
-    (d) => Number(d.mobility_exposure_score) || 0,
-  );
 
   const urbanMin = Math.min(...urbanValues);
   const urbanRange = Math.max(1, Math.max(...urbanValues) - urbanMin);
@@ -213,10 +207,17 @@ export function computeDiseaseRisk(districts, params) {
     1,
     Math.max(...employmentValues) - employmentMin,
   );
-  const mobilityMin = Math.min(...mobilityValues);
-  const mobilityRange = Math.max(1, Math.max(...mobilityValues) - mobilityMin);
 
-  const raw = districts.map((d) => {
+  const withExposure = computeExposureMetrics(districts, {
+    densityAccessor: (district) =>
+      (Number(district.density) || 0) * densityScale,
+    investmentAccessor: (district) =>
+      Number(district.investment_core_crore) || 0,
+    mobilityAccessor: (district) =>
+      Number(district.mobility_exposure_score) || 0,
+  });
+
+  const raw = withExposure.map((d) => {
     const adjustedDensity = (d.density || 0) * densityScale;
     // ── Hazard ────────────────────────────────────────────────────────────────
     const densityFactor = Math.sqrt(
@@ -260,12 +261,10 @@ export function computeDiseaseRisk(districts, params) {
         Math.max(0, (Number(d.literacy_rate) - LIT_MIN) / (LIT_MAX - LIT_MIN)),
       );
 
-    const urbanDeficit =
-      1 -
-      Math.min(
-        1,
-        Math.max(0, ((Number(d.urban_pct) || 0) - urbanMin) / urbanRange),
-      );
+    const urbanDeficit = Math.min(
+      1,
+      Math.max(0, ((Number(d.urban_pct) || 0) - urbanMin) / urbanRange),
+    );
     const employmentDeficit = Math.min(
       1,
       Math.max(
@@ -273,14 +272,6 @@ export function computeDiseaseRisk(districts, params) {
         ((Number(d.unemployment_proxy) || 0) - employmentMin) / employmentRange,
       ),
     );
-    const mobilityDeficit = Math.min(
-      1,
-      Math.max(
-        0,
-        ((Number(d.mobility_exposure_score) || 0) - mobilityMin) / mobilityRange,
-      ),
-    );
-
     // frailty: weighted average deficit (equal weights, 0–1)
     const frailtyDimensions = [
       hospBedDeficit,
@@ -288,7 +279,6 @@ export function computeDiseaseRisk(districts, params) {
       litDeficit,
       urbanDeficit,
       employmentDeficit,
-      mobilityDeficit,
     ];
     const frailty =
       frailtyDimensions.reduce((sum, value) => sum + value, 0) /
@@ -302,7 +292,7 @@ export function computeDiseaseRisk(districts, params) {
     const compVuln = Math.min(1, baseVuln * (1 + frailty * ifrAmp));
 
     // ── Exposure ──────────────────────────────────────────────────────────────
-    const exposure = Math.min(1, adjustedDensity / MAX_DENSITY);
+    const exposure = d.exposure_score;
 
     return {
       ...d,
@@ -324,9 +314,9 @@ export function computeDiseaseRisk(districts, params) {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 export function diseaseRiskTier(score) {
-  if (score >= 65)
+  if (score >= 60)
     return { label: "Critical Risk", cls: "tag-h", color: "#f05252" };
-  if (score >= 40)
+  if (score >= 30)
     return { label: "Elevated Risk", cls: "tag-m", color: "#f5a623" };
   return { label: "Contained", cls: "tag-l", color: "#00c9a7" };
 }
